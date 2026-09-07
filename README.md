@@ -64,6 +64,7 @@ leaderboard_proxy    : 02/23 ~ 02/29  ← 참고용 NDCG (튜닝 미반영)
 | **SASRec** | Self-Attentive Sequential Recommendation | [`conf/model/sasrec.yaml`](conf/model/sasrec.yaml) |
 | **TiSASRec** | 시간 간격 반영 SASRec (CV=4.12 대응) | [`conf/model/tisasrec.yaml`](conf/model/tisasrec.yaml) |
 | **CL4SRec** | 대조학습 기반 시퀀스 추천 (희소 대응) | [`conf/model/cl4srec.yaml`](conf/model/cl4srec.yaml) |
+| **FEARec** | FFT 주파수 증강 + InfoNCE 대조학습 (SIGIR 2023) | [`conf/model/fearec.yaml`](conf/model/fearec.yaml) |
 | **BSARec** | FFT 저역통과 필터 + SA 혼합 (AAAI 2024) | [`conf/model/bsarec.yaml`](conf/model/bsarec.yaml) |
 | **SAFERec** | SASRec + view 빈도 임베딩 (롱테일 대응) | [`conf/model/saferec.yaml`](conf/model/saferec.yaml) |
 | **MB-STR** | SASRec + view/cart/purchase 행동 타입 임베딩 | [`conf/model/mbstr.yaml`](conf/model/mbstr.yaml) |
@@ -71,7 +72,7 @@ leaderboard_proxy    : 02/23 ~ 02/29  ← 참고용 NDCG (튜닝 미반영)
 
 구현: [`src/models/`](src/models/)
 
-> **26-09-07 정정**: 이전 버전에 "FEARec(SIGIR 2023)"이 지원 모델로 적혀 있었지만, `conf/model/fearec.yaml`도 `src/models/fearec.py`도 없고 `build_model()` 팩토리에도 등록되어 있지 않습니다. 실험 초기에 검토만 하고 실제 구현하지 않은 것으로 보여 표에서 제거했습니다. "초기 베이스라인·RecBole 실험" 링크가 가리키던 `baseline_code/`도 이 리포에는 포함되어 있지 않아 링크를 뺐습니다.
+> **26-09-07 정정**: 이전에 여기 있던 "초기 베이스라인·RecBole 실험: `baseline_code/`" 링크를 제거했습니다 — 로컬 실험 기록에도 이 디렉터리는 존재하지 않아 근거를 찾지 못했습니다. (참고: 같은 날 한 번 FEARec도 이 이유로 잘못 제거했었는데, 로컬 원본에 `src/models/fearec.py`·`conf/model/fearec.yaml`이 실제로 있어 다시 복원했습니다.)
 
 ---
 
@@ -157,7 +158,7 @@ recsys/
 ├── conf/                     # Hydra 설정
 │   ├── config.yaml
 │   ├── data/                 # 데이터 경로, spike 처리
-│   ├── model/                # 모델별 하이퍼파라미터 (sasrec·tisasrec·cl4srec·bsarec·saferec·mbstr)
+│   ├── model/                # 모델별 하이퍼파라미터 (sasrec·tisasrec·cl4srec·fearec·bsarec·saferec·mbstr)
 │   ├── cv/                   # Holdout / none
 │   ├── train/                # 학습률, 배치, loss 가중치
 │   └── ensemble/rank.yaml    # 앙상블 가중치 (8개 모델)
@@ -184,6 +185,7 @@ recsys/
 │       ├── sasrec.py         # SASRec (Pre-LN, causal mask, BPR)
 │       ├── tisasrec.py       # TiSASRec (시간 간격 attention)
 │       ├── cl4srec.py        # CL4SRec (crop/mask/reorder 대조학습)
+│       ├── fearec.py         # FEARec (FFT 주파수 증강 + InfoNCE)
 │       ├── bsarec.py         # BSARec (FFT 저역통과 + SA 혼합)
 │       ├── saferec.py        # SAFERec (view 빈도 임베딩)
 │       ├── mbstr.py          # MB-STR (행동 타입 임베딩)
@@ -243,6 +245,7 @@ data/sample_submission.csv
 python src/train.py model=sasrec
 python src/train.py model=tisasrec
 python src/train.py model=cl4srec
+python src/train.py model=fearec
 python src/train.py model=bsarec
 python src/train.py model=saferec
 python src/train.py model=mbstr
@@ -271,6 +274,7 @@ python src/eval_proxy.py model=tisasrec run_id=run001
 python src/train.py model=sasrec   cv=none
 python src/train.py model=tisasrec cv=none
 python src/train.py model=cl4srec  cv=none
+python src/train.py model=fearec   cv=none
 python src/train.py model=bsarec   cv=none
 python src/train.py model=saferec  cv=none
 python src/train.py model=mbstr    cv=none
@@ -399,6 +403,7 @@ python src/train.py model=cl4srec train.epochs=20 train.early_stopping_patience=
 | SASRec   | 4096                                          | ~6 GB       |
 | TiSASRec | 1024                                          | ~9 GB (time_matrix [B,L,L]) |
 | CL4SRec  | 2048                                          | ~10 GB (대조 뷰 2개) |
+| FEARec   | 2048                                          | ~10 GB (FFT 증강 뷰) |
 | BSARec   | 4096                                          | ~6 GB       |
 | SAFERec  | 4096                                          | ~6 GB       |
 | MB-STR   | 4096                                          | ~6 GB       |
